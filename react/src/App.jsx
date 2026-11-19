@@ -1,73 +1,57 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './App.css';
-import AnswerKeyUpload from './components/AnswerKeyUpload';
-import StudentSubmissionUpload from './components/StudentSubmissionUpload';
+import FilePicker from './components/FilePicker';
 import Loading from './components/Loading';
-import ResultsDisplay from './components/ResultsDisplay';
-import MessageDisplay from './components/MessageDisplay'; 
-import { uploadAnswerKey, uploadStudentSubmissions, fetchResults } from './utils/api'; // Updated imports
+import MessageDisplay from './components/MessageDisplay';
+import { uploadAnswerKey, uploadStudentSubmissions } from './utils/api';
 
+// Two steps: upload the answer key, then upload the students' work.
 function App() {
   const [loading, setLoading] = useState(false);
-  const [uploaded, setUploaded] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [results, setResults] = useState(null);
+  const [hasAnswerKey, setHasAnswerKey] = useState(false);
+  const [message, setMessage] = useState(null);
 
-  const handleUploadAnswerKey = async (file) => {
+  async function runUpload(upload, successText) {
     setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    const response = await uploadAnswerKey(file);
+    setMessage(null);
+    const response = await upload();
+    setLoading(false);
 
     if (response.success) {
-      setUploaded(true);
-      setSuccess('Answer key uploaded successfully!');
+      setMessage({ type: 'success', text: successText });
     } else {
-      setError(response.error);
+      setMessage({ type: 'error', text: response.error });
     }
+    return response.success;
+  }
 
-    setLoading(false);
-  };
+  async function handleAnswerKey([file]) {
+    const uploaded = await runUpload(() => uploadAnswerKey(file), 'Answer key uploaded.');
+    if (uploaded) setHasAnswerKey(true);
+  }
 
-  const handleUploadSubmissions = async (files) => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    const response = await uploadStudentSubmissions(files);
-
-    if (response.success) {
-      // Fetch the grading results after successful submissions
-      const resultData = await fetchResults(); // New addition to get results from API
-      setResults(resultData);
-      setSuccess('Student submissions uploaded successfully!');
-    } else {
-      setError(response.error);
-    }
-
-    setLoading(false);
-  };
+  function handleSubmissions(files) {
+    runUpload(() => uploadStudentSubmissions(files), 'Student work uploaded.');
+  }
 
   return (
     <div className="App">
-      <h1>Gradient - Grader</h1>
+      <h1>Gradient</h1>
 
-      {loading && <Loading />} 
+      {loading && <Loading />}
+      {message && <MessageDisplay message={message.text} type={message.type} />}
 
-      {error && <MessageDisplay message={error} type="error" />}
-      {success && <MessageDisplay message={success} type="success" />}
-
-      {!loading && !uploaded && (
-        <AnswerKeyUpload setLoading={setLoading} setUploaded={handleUploadAnswerKey} />
+      {!loading && !hasAnswerKey && (
+        <FilePicker title="Upload the answer key" buttonLabel="Upload answer key" onUpload={handleAnswerKey} />
       )}
-
-      {!loading && uploaded && !results && (
-        <StudentSubmissionUpload setLoading={setLoading} setUploaded={handleUploadSubmissions} />
+      {!loading && hasAnswerKey && (
+        <FilePicker
+          title="Upload student work"
+          buttonLabel="Upload submissions"
+          multiple
+          onUpload={handleSubmissions}
+        />
       )}
-
-      {!loading && results && <ResultsDisplay results={results} />}
     </div>
   );
 }

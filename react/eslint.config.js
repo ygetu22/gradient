@@ -35,4 +35,9 @@ export default [
       ],
     },
   },
+  {
+    // The API server and the Vite config run in Node, not the browser.
+    files: ['server/**/*.js', 'vite.config.js'],
+    languageOptions: { globals: globals.node },
+  },
 ]
