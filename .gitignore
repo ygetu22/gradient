@@ -26,5 +26,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Ignore environment files
-react/src/utils/.env
+# Secrets and uploaded files stay on your machine
+.env
+react/uploads/
