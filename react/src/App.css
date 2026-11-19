@@ -52,6 +52,14 @@ button:hover {
   transform: translateY(-3px); /* Lifts the button on hover */
 }
 
+/* Waiting for a file to be chosen */
+button:disabled {
+  background-color: #2b2d42;
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Input Styling */
 input[type="file"] {
   margin-top: 20px;
